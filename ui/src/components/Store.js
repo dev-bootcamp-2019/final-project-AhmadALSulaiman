@@ -27,7 +27,9 @@ class Store extends Component {
         let productsDetails = [];
 
         for (let i=0; i<productsIds.length; i++) {
-            productsDetails.push(await marketplace.methods.getProductDetails(productsIds[i]).call());
+            if (productsIds[i] != 0) {
+                productsDetails.push(await marketplace.methods.getProductDetails(productsIds[i]).call());
+            }
         }
 
         this.setState({ account, storeName, storeNameBytes, productsDetails });
@@ -35,7 +37,6 @@ class Store extends Component {
 
     renderProducts() {
         const products = this.state.productsDetails.map(details => {
-
             return (
                 <Product details={details} />
             );
@@ -48,9 +49,9 @@ class Store extends Component {
         );
     }
 
-    buyProduct = async (event) => {
+    removeStoreFront = async (event) => {
         event.preventDefault();
-        console.log(this);
+        await marketplace.methods.removeStoreFront(this.state.storeNameBytes).send({from: this.state.account});
     };
 
     render() {
@@ -61,6 +62,10 @@ class Store extends Component {
                     {this.state.storeName} 
                 </h1>
                 {this.renderProducts()}
+
+                <button onClick={this.removeStoreFront} className="btn btn-secondary">
+                    Remove StoreFront
+                </button>
             </div>
         );
     }

@@ -108,13 +108,6 @@ class StoreOwner extends Component {
                                 <button className="btn btn-secondary" style={{'marginTop':'10px'}}>Add Product</button>
                             </form>
                         </div>
-                    
-                        {/* <div className="col-md-3 form-group">
-                            <label>Removing Products</label>
-                            <input className="form-control" id="productStoreFrontName" type="text" placeholder="Add New Product's Store" />
-                            <input className="form-control" id="productId" type="text" placeholder="Add New Product's Id" />
-                            <button id="removeProduct" className="btn btn-primary" style={{'marginTop':'10px'}}>Remove Product</button>
-                        </div> */}
                     </div>
                 </div>
                 </div>

@@ -28,6 +28,7 @@ contract Marketplace {
     /* helpers */
     mapping(bytes32 => uint256[]) public storeToProductsIds;
     mapping(uint256 => Product) public idToProduct;
+    mapping(bytes32 => uint256) public storeToStoreId;
     bytes32[] public storeFronts;
 
 
@@ -62,14 +63,23 @@ contract Marketplace {
         require(isStoreOwner[msg.sender], "Only registered store owners can create new store fronts!");
         
         storeToOwner[_storeName] = msg.sender;
+        storeToStoreId[_storeName] = getNewStoreId();
         storeFronts.push(_storeName);
 
-        emit storeCreated(_storeName, getNewStoreId());
+        emit storeCreated(_storeName, storeToStoreId[_storeName]);
     }
 
     function removeStoreFront(bytes32 _storeName) public {
         require(isStoreOwner[msg.sender], "Only store owners can remove their store fronts!");
+        
         delete storeToOwner[_storeName];
+        delete storeFronts[storeToStoreId[_storeName]-1];
+        
+        for(uint256 i=0; i<storeToProductsIds[_storeName].length; i++) {
+            delete storeToProducts[_storeName][storeToProductsIds[_storeName][i]];
+        }
+
+        delete storeToProductsIds[_storeName];
     }
 
     function addProduct(
@@ -103,6 +113,13 @@ contract Marketplace {
         /* update helpers */
         delete idToProduct[_prId];
         delete storeToProductsIds[_storeName][_prId-1];
+    }
+
+    function editProductPrice(bytes32 _storeName, uint256 _prId, uint256 _newPrice) public {
+        require(storeToOwner[_storeName] == msg.sender, "Only store owners can edit products!");
+
+        storeToProducts[_storeName][_prId].price = _newPrice;
+        idToProduct[_prId].price = _newPrice;
     }
 
     function buyProduct(bytes32 _storeName, uint256 _prId) public payable {
