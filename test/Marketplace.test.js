@@ -1,10 +1,11 @@
 var Marketplace = artifacts.require('Marketplace.sol');
+var Storefront = artifacts.require('Storefront.sol');
 
 
 contract('Marketplace', (accounts) => {
     manager = accounts[0];
     
-    it('should deploy contract and assign correct manager', async() => {
+    it('should deploy the marketplace contract and assign correct manager', async() => {
         var instance = await Marketplace.deployed();
         var registeredManager = await instance.manager();
 
@@ -15,123 +16,87 @@ contract('Marketplace', (accounts) => {
         var instance = await Marketplace.deployed();
         await instance.addAdmin(accounts[2], {from: manager});
 
-        var isAdmin = await instance.isAdmin(accounts[2]);
+        var newAdminId = await instance.adminToId(accounts[2]);
 
-        assert.equal(isAdmin, true, "isAdmin has an unexpected value!");
+        assert.equal(newAdminId, 1, "newAdminId has an unexpected value!");
     });
 
-    it('should enable admins to add store owners', async() => {
+    it('should enable admins to add storeowners', async() => {
         var instance = await Marketplace.deployed();
+        await instance.addStoreowner(accounts[3], {from: accounts[2]});
+        
+        var newStoreownerId = await instance.storeownerToId(accounts[3]);
 
-        await instance.addAdmin(accounts[2], {from: manager});
-        var isAdmin = await instance.isAdmin(accounts[2]);
-        assert.equal(isAdmin, true, "isAdmin has an unexpected value!");
-
-        await instance.addStoreOwner(accounts[3], {from: accounts[2]});
-        var isStoreOwner = await instance.isStoreOwner(accounts[3]);
-        assert.equal(isStoreOwner, true, "isStoreOwner has an unexpected value!");
+        assert.equal(newStoreownerId, 1, "newStoreownerId has an unexpected value!");
     });
 
-    it('should enable store owners to create store fronts', async() => {
+    it('should enable storeowners to create storefronts', async() => {
         var instance = await Marketplace.deployed();
 
-        await instance.addAdmin(accounts[2], {from: manager});
-        await instance.addStoreOwner(accounts[3], {from: accounts[2]});
+        var storeName = web3.utils.utf8ToHex('Saadah Store');
+        var createdStorefront = await instance.createStorefront(storeName, {from: accounts[3]});
 
-
-        var storeName = web3.utils.utf8ToHex('Al-Saadah Store');
-
-        await instance.createStoreFront(storeName, {from: accounts[3]});
-        var registeredOwner = await instance.storeToOwner(storeName);
+        var registeredOwner = await instance.storeAddressToStoreowner(createdStorefront.logs[0].args[0]);
 
         assert.equal(registeredOwner, accounts[3], "registeredOwner has an unexpected value!");
     });
 
-    it('should enable store owners to add products', async() => {
+    it('should enable storeowners to add products', async() => {
         var instance = await Marketplace.deployed();
-
-        await instance.addAdmin(accounts[2], {from: manager});
-        await instance.addStoreOwner(accounts[3], {from: accounts[2]});
         
-        var storeName = web3.utils.utf8ToHex('Al-Saadah Store');
-        await instance.createStoreFront(storeName, {from: accounts[3]});
-
+        var deployedStorefrontAddress = await instance.deployedStorefronts(0);
+        var storefrontInstance = await Storefront.at(deployedStorefrontAddress);
 
         var product = [web3.utils.utf8ToHex('Salsah'), 1000000000, 50];
         var anotherProduct = [web3.utils.utf8ToHex('Tunah'), 25000000000, 40];
 
-        await instance.addProduct(storeName, product[0], product[1], product[2], {from: accounts[3]});
-        await instance.addProduct(storeName, anotherProduct[0], anotherProduct[1], anotherProduct[2], {from: accounts[3]});
-        
-        /* get added product */
-        var registeredProduct = await instance.storeToProducts(storeName, 1);
-        var anotherRegisteredProduct = await instance.storeToProducts(storeName, 2);
+        await storefrontInstance.addProduct(product[0], product[1], product[2], {from: accounts[3]});
+        await storefrontInstance.addProduct(anotherProduct[0], anotherProduct[1], anotherProduct[2], {from: accounts[3]});
 
+        var registeredProduct = await storefrontInstance.idToProduct(1);
 
         assert.equal(web3.utils.hexToUtf8(registeredProduct.name), 'Salsah', "registeredProduct has an unexpected name!");
-        assert.equal(web3.utils.hexToUtf8(anotherRegisteredProduct.name), 'Tunah', "anotherRegisteredProduct has an unexpected name!");
     });
 
     it('should enable shoppers to buy products', async() => {
         var instance = await Marketplace.deployed();
 
-        await instance.addAdmin(accounts[2], {from: manager});
-        await instance.addStoreOwner(accounts[3], {from: accounts[2]});
-        
-        var storeName = web3.utils.utf8ToHex('Al-Saadah Store');
-        await instance.createStoreFront(storeName, {from: accounts[3]});
+        var deployedStorefrontAddress = await instance.deployedStorefronts(0);
+        var storefrontInstance = await Storefront.at(deployedStorefrontAddress);
 
-        var product = [web3.utils.utf8ToHex('Salsah'), 1000000000, 50];
-        var anotherProduct = [web3.utils.utf8ToHex('Tunah'), 25000000000, 40];        
-        await instance.addProduct(storeName, product[0], product[1], product[2], {from: accounts[3]});
-        await instance.addProduct(storeName, anotherProduct[0], anotherProduct[1], anotherProduct[2], {from: accounts[3]});
+        await storefrontInstance.buyProduct(1, 3, {from: accounts[4], value: 1000000000 * 3});
 
-        await instance.buyProduct(storeName, 1, {from: accounts[4], value: product[1]});
-        await instance.buyProduct(storeName, 2, {from: accounts[4], value: anotherProduct[1]});
+        var soldProduct = await storefrontInstance.idToProduct(1);
 
-        var soldProduct = await instance.storeToProducts(storeName, 1);
-
-        assert.equal(soldProduct.amount, product[2]-1, "soldProduct has an unexpected amount!");
+        assert.equal(soldProduct.quantity, 47, "soldProduct has an unexpected quantity!");
     });
 
-    it('should enable store owners to remove products', async() => {
+    it('should enable storeowners to remove products', async() => {
         var instance = await Marketplace.deployed();
 
-        await instance.addAdmin(accounts[2], {from: manager});
-        await instance.addStoreOwner(accounts[3], {from: accounts[2]});
-        
-        var storeName = web3.utils.utf8ToHex('Al-Saadah Store');
-        await instance.createStoreFront(storeName, {from: accounts[3]});
-
-        var product = [web3.utils.utf8ToHex('Salsah'), 1000000000, 50];
-        await instance.addProduct(storeName, product[0], product[1], product[2], {from: accounts[3]});
-        
-        /* product slot before removing it */
-        var productSlot = await instance.storeToProducts(storeName, 1);
+        var deployedStorefrontAddress = await instance.deployedStorefronts(0);
+        var storefrontInstance = await Storefront.at(deployedStorefrontAddress);
 
         /* remove product */
-        await instance.removeProduct(storeName, 1, {from: accounts[3]});
+        await storefrontInstance.removeProduct(1, {from: accounts[3]});
 
         /* product slot after removing it */
-        productSlot = await instance.storeToProducts(storeName, 1);
+        productSlot = await storefrontInstance.idToProduct(1);
 
-        assert.equal(productSlot.price, 0, "productSlot has an unexpected value! (AFTER REMOVING THE PRODUCT)");
+        assert.equal(productSlot.name, 0, "productSlot has an unexpected value! (AFTER REMOVING THE PRODUCT)");
     });
 
-    it('should get store fronts name', async() => {
+    it('should enable storeowners to kill storefronts contracts', async() => {
         var instance = await Marketplace.deployed();
 
-        await instance.addAdmin(accounts[2], {from: manager});
-        await instance.addStoreOwner(accounts[3], {from: accounts[2]});
-        
-        var firstStoreName = web3.utils.utf8ToHex('Al-Saadah Store');
-        var secondStoreName = web3.utils.utf8ToHex('Al-Wanasah Store');
-        await instance.createStoreFront(firstStoreName, {from: accounts[3]});
-        await instance.createStoreFront(secondStoreName, {from: accounts[3]});
+        var deployedStorefrontAddress = await instance.deployedStorefronts(0);
+        var deployedStorefrontId = await instance.storeAddressToId(deployedStorefrontAddress);
 
-        var storeFronts = await instance.getStoreFronts();
-        storeFronts.forEach((storeName) => {
-            console.log(web3.utils.hexToUtf8(storeName));
-        });
+        await instance.removeStorefront(deployedStorefrontAddress, {from: accounts[3]});
+
+        var removedStorefrontId = await instance.storeAddressToId(deployedStorefrontAddress);
+
+        assert.equal(deployedStorefrontId, 1, "deployedStorefrontId has an unexpected value!");
+        assert.equal(removedStorefrontId, 0, "removedStorefrontId has an unexpected value!");
     });
 });

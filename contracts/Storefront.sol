@@ -1,10 +1,15 @@
 pragma solidity ^0.5;
 
 
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+
+
 contract Storefront {
+    using SafeMath for uint256;
 
     address public storeowner;
     bytes32 public storeName;
+    bool public stopped = false;
 
     struct Product {
         uint256 id;
@@ -18,20 +23,29 @@ contract Storefront {
     
     uint256[] public productsIds;
 
-    /* storeowners functionalities */
+    /* modifiers */
+    modifier onlyStoreowner {
+        require(storeowner == msg.sender, "This is a storeowner-only function!");
+        _;
+    }
+
+    modifier notStopped {
+        require(stopped == false, "This contract is stopped!");
+        _;
+    }
+
     constructor(bytes32 _storeName, address _storeowner) public {
         storeowner = _storeowner;
         storeName = _storeName;
     }
 
+    /* storeowners functionalities */
     function addProduct(
         bytes32 _prName, 
         uint256 _prPrice, 
         uint256 _prQuantity) 
-        public returns (uint256 prId) 
+        public  onlyStoreowner returns (uint256 prId) 
     {
-        require(storeowner == msg.sender, "Only storeowners can add new products!");
-
         prId = getNewProductId();
         Product memory product = Product(prId, _prName, _prPrice, _prQuantity);
 
@@ -43,36 +57,33 @@ contract Storefront {
         return prId;
     }
 
-    function removeProduct(uint256 _prId) public {
-        require(storeowner == msg.sender, "Only storeowners can remove products!");
+    function removeProduct(uint256 _prId) public onlyStoreowner {
 
         /* remove product */
-        delete products[_prId-1];
+        delete products[_prId.sub(1)];
         delete idToProduct[_prId];
-        delete productsIds[_prId-1];
+        delete productsIds[_prId.sub(1)];
     }
 
-    function editProductPrice(uint256 _prId, uint256 _newPrice) public {
-        require(storeowner == msg.sender, "Only storeowners can edit products!");
+    function editProductPrice(uint256 _prId, uint256 _newPrice) public onlyStoreowner {
 
         /* update prices */
-        products[_prId-1].price = _newPrice;
+        products[_prId.sub(1)].price = _newPrice;
         idToProduct[_prId].price = _newPrice;
     }
 
-    function buyProduct(uint256 _prId, uint256 _quantity) public payable {
-        require(idToProduct[_prId].price * _quantity == msg.value, "Sent Ethers is not enough!");
+    function withdrawFunds() public onlyStoreowner {
+        msg.sender.transfer(address(this).balance);
+    }
+
+    /* shoppers functionalities */
+    function buyProduct(uint256 _prId, uint256 _quantity) public notStopped payable {
+        require(idToProduct[_prId].price.mul(_quantity) == msg.value, "Sent Ethers is not enough!");
         require(idToProduct[_prId].quantity >= _quantity, "Not enough pieces are available!");
 
         /* update product */
-        products[_prId-1].quantity = products[_prId-1].quantity - _quantity;
-        idToProduct[_prId].quantity = idToProduct[_prId].quantity - _quantity;
-    }
-
-    function withdrawFunds() public {
-        require(storeowner == msg.sender, "Only storeowner can withdraw funds!");
-
-        msg.sender.transfer(address(this).balance);
+        products[_prId.sub(1)].quantity = products[_prId.sub(1)].quantity.sub(_quantity);
+        idToProduct[_prId].quantity = idToProduct[_prId].quantity.sub(_quantity);
     }
 
     /* destroy the contract and reclaim the leftover funds */
@@ -81,10 +92,14 @@ contract Storefront {
         selfdestruct(_txOrigin);
     }
 
+    function stopContract() public onlyStoreowner {
+        stopped = true;
+    }
+
     /* helpers */
     function getNewProductId() private view returns (uint256) {
-        /* IDs starts from 1 */
-        return products.length + 1;
+        /* Ids starts from 1 */
+        return products.length.add(1);
     }
 
     function getProductsIds() public view returns (uint256[] memory) {

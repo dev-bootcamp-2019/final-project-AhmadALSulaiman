@@ -68,6 +68,17 @@ class Store extends Component {
         }
     }
 
+    stopStorefront = async (event) => {
+        event.preventDefault();
+
+        try {
+            await this.state.storefront.methods.stopContract().send({from: this.state.account});
+            window.location.reload();
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     removeStorefront = async (event) => {
         event.preventDefault();
 
@@ -153,14 +164,20 @@ class Store extends Component {
                                     </button>
                                 </form>
 
+                                <form onSubmit={this.stopStorefront}>
+                                    <button style={{"marginTop":"10px", "marginLeft":"12px"}} className="btn btn-secondary"> 
+                                        Stop Storefront
+                                    </button>
+                                </form>
+
                                 <form onSubmit={this.removeStorefront}>
                                     <button style={{"marginTop":"10px"}} className="btn btn-danger"> 
                                         Remove Storefront
                                     </button>
                                 </form>
+
                             </div>
                         </div>
-                        
                     </div>
 
                     <div className="col-8">
