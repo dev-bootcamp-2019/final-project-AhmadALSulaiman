@@ -1399,12 +1399,12 @@
     "1548411635877": {
       "events": {},
       "links": {},
-      "address": "0xd0fef44a2f2467429f8620444aDAdD37247114EF",
-      "transactionHash": "0x8a0f7597f116a5b570d05f732c2d5a00672123bddbc79037e407ab8d4152c839"
+      "address": "0xbbf69673e44988D2FD7D878eDbD1cDDa1A70fAB7",
+      "transactionHash": "0x50b86e405c5ac34a0cb74c192c61412516f4e1e033ffe8c5f4a368176a46d165"
     }
   },
   "schemaVersion": "3.0.0",
-  "updatedAt": "2019-01-26T13:37:00.282Z",
+  "updatedAt": "2019-01-26T14:02:46.674Z",
   "devdoc": {
     "methods": {}
   },
