@@ -10,32 +10,84 @@ class Admin extends Component {
 
         this.state = {
             account: null,
-            newAdminAddress: '',
-            newStoreOwnerAddress: '',
+            storeownersAddresses: [],
+            numOfStoreowners: 0,
+            newStoreownerAddress: '',
+            currStoreownerAddress: '',
         }
     }
 
     async componentDidMount() {
-        const account = MyWeb3.currentProvider.selectedAddress;
-        this.setState({ account });
+
+        try {
+            const accounts = await MyWeb3.eth.getAccounts();
+            const storeownersAddresses = await marketplace.methods.getStoreowners().call();
+
+            this.setState({ account: accounts[0], storeownersAddresses });
+        } catch (error) {
+            console.log(error);
+        }
     }
 
-    addAdmin = async (event) => {
+    addStoreowner = async (event) => {
         event.preventDefault();
 
-        await marketplace.methods.addAdmin(this.state.newAdminAddress).send({from: this.state.account});
-        let isAdmin = await marketplace.methods.isAdmin(this.state.newAdminAddress).call();
+        try {
+            await marketplace.methods.addStoreowner(this.state.newStoreownerAddress).send({from: this.state.account});
+            window.location.reload();
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
-        console.log(this.state.newAdminAddress, ' is admin?', isAdmin);
-    };
-
-    addStoreOwner = async (event) => {
+    removeStoreowner = async (event) => {
         event.preventDefault();
 
-        await marketplace.methods.addStoreOwner(this.state.newStoreOwnerAddress).send({from: this.state.account});
-        let isStoreOwner = await marketplace.methods.isStoreOwner(this.state.newStoreOwnerAddress).call();
+        try {
+            await marketplace.methods.removeStoreowner(this.state.currStoreownerAddress).send({from: this.state.account});
+            window.location.reload();
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
-        console.log(this.state.newStoreOwnerAddress, ' is store owner?', isStoreOwner);
+    renderStoreowenrs() {
+        let storeowners = this.state.storeownersAddresses.map((address) => {
+            if (address != 0) {
+
+                this.state.numOfStoreowners++;
+
+                return (
+                    <p>
+                        {address}
+                    </p>
+                );
+            }
+        });
+
+        if (this.state.numOfStoreowners > 0) {
+            return (
+                <div>
+                    <h4>Registered Storeowners</h4>
+    
+                    {storeowners}
+                    <form onSubmit={this.removeStoreowner} className="form-group">
+                        <input 
+                            value={this.state.currStoreownerAddress} 
+                            onChange={(event) => this.setState({currStoreownerAddress: event.target.value})}
+                            className="form-control"
+                            type="text"
+                            placeholder="Paste In Storeowner Address to Remove"
+                        />
+                        <button className="btn btn-danger" style={{"marginTop":"10px"}}>Remove Storeowner</button>
+                    </form>
+                </div>
+            );
+        } else {
+            return (
+                <h4 style={{"textAlign":"center"}}>No registered storeowners.</h4>
+            );
+        }
     }
 
     render() {
@@ -43,34 +95,23 @@ class Admin extends Component {
             <div>
                 <Header />
                 <div className="container">
-                <div className="col-lg-8">
-                    <div className="row">
-                        <div className="col-md-6 form-group">
-                        <form onSubmit={this.addAdmin}>
-                            <label>Adding Admins</label>
+                <div className="row">
+                    <div className="col-6">
+                        <form onSubmit={this.addStoreowner}>
+                            <h4>Add New Storeowner</h4>
                             <input 
-                                value={this.state.newAdminAddress}
-                                onChange={event => this.setState({newAdminAddress: event.target.value})} 
-                                className="form-control" 
-                                type="text" 
-                                placeholder="New Admin" 
-                            />
-                            <button className="btn btn-secondary" style={{'marginTop':'10px'}}>Add Admin</button>
-                        </form>
-                        </div>    
-                        <div className="col-md-6 form-group">
-                        <form onSubmit={this.addStoreOwner}>
-                            <label>Adding Store Owners</label>
-                            <input 
-                                value={this.state.newStoreOwnerAddress}
-                                onChange={event => this.setState({newStoreOwnerAddress: event.target.value})}
+                                value={this.state.newStoreownerAddress}
+                                onChange={event => this.setState({newStoreownerAddress: event.target.value})}
                                 className="form-control"
                                 type="text"
                                 placeholder="New Store Owner"
                             />
-                            <button className="btn btn-secondary" style={{'marginTop':'10px'}}>Add StoreOwner</button>
+                            <button className="btn btn-secondary" style={{'marginTop':'10px'}}>Add Storeowner</button>
                         </form>
-                        </div>
+                    </div>
+
+                    <div className="col-6">
+                        {this.renderStoreowenrs()}
                     </div>
                 </div>
                 </div>

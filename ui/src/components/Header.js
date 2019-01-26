@@ -13,8 +13,13 @@ class Header extends Component {
     }
 
     async componentDidMount() {
-        const account = MyWeb3.currentProvider.selectedAddress;
-        this.setState({ account });
+
+        try {
+            const accounts = await MyWeb3.eth.getAccounts();
+            this.setState({ account: accounts[0] });
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     render() {

@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import MyWeb3 from '../MyWeb3';
 import Header from './Header';
 import marketplace from '../marketplace';
 import { Link } from 'react-router-dom';
@@ -10,48 +9,54 @@ class Stores extends Component {
         super();
 
         this.state = {
-            account: null,
-            storesNames: [],
+            storefrontsAddresses: [],
+            numberOfStores: 0,
         };
     }
 
     async componentDidMount() {
-        const account = MyWeb3.currentProvider.selectedAddress;
-        const storesInHex = await marketplace.methods.getStoreFronts().call();
-        let storesNames = [];
 
-        storesInHex.forEach((storeInHex) => {
-            storesNames.push(MyWeb3.utils.hexToUtf8(storeInHex));
-        });
-
-        this.setState({ account, storesNames });
+        try {
+            const storefrontsAddresses = await marketplace.methods.getDeployedStorefronts().call();
+            
+            this.setState({ storefrontsAddresses });
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     renderStores() {
-        const stores = this.state.storesNames.map(storeName => {
-            if (storeName) {
+        let stores = this.state.storefrontsAddresses.map(storeAddress => {
+            if (storeAddress != 0) {
+
+                this.state.numberOfStores++;
+
                 return (
-                    <div className="container">
-                    <div className="col-3">
-                        <div className="card" style={{'width':'16rem'}}>
-                        <img className="card-img-top" src="https://gusandruby.com/wp-content/uploads/2015/03/img-storefront-gallery-1.jpg" alt="Card image cap" />
-                        <div className="card-body">
-                            <p className="card-title">{storeName}</p>
-                            {/* <p className="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p> */}
-                            <Link to={'/stores/' + storeName} className="btn btn-secondary">Open Store</Link>
+                    <div>
+                        <div className="card" style={{'width':'16rem', 'padding':'2px', 'margin':'5px'}}>
+                            <img className="card-img-top" src="https://gusandruby.com/wp-content/uploads/2015/03/img-storefront-gallery-1.jpg" alt="Card image cap" />
+                            <div className="card-body">
+                                <p className="card-title">{storeAddress}</p>
+                                {/* <p className="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p> */}
+                                <Link to={'/store/' + storeAddress} className="btn btn-primary">Open Store</Link>
+                            </div>
                         </div>
-                        </div>
-                    </div>
                     </div>
                 );
             }
         });
-
-        return (
-            <div className="row">
-                {stores}
-            </div>
-        );
+            
+        if (this.state.numberOfStores > 0) {
+            return (
+                <div className="row">
+                    {stores}
+                </div>
+            );
+        } else {
+            return (
+                <h1 style={{"textAlign":"center"}}>No available stores.</h1>
+            );
+        }
     }
 
     render() {
@@ -59,7 +64,7 @@ class Stores extends Component {
             <div>
                 <Header />
                 <div className="container">
-                    {this.renderStores()}
+                        {this.renderStores()}
                 </div>
             </div>
         );

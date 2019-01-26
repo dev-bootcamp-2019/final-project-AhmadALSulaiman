@@ -4,7 +4,7 @@ import Marketplace from './contracts/Marketplace.json';
 
 const instance = new MyWeb3.eth.Contract(
     Marketplace.abi,
-    '0xc34175A79ACca40392bECD22ff10fAeBFE780Ae7'
+    '0xB9bdBAEc07751F6d54d19A6B9995708873F3DE18'
 );
 
 

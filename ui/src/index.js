@@ -5,7 +5,7 @@ import * as serviceWorker from './serviceWorker';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter, Route } from 'react-router-dom';
 import Manager from './components/Manager';
-import StoreOwner from './components/StoreOwner';
+import Storeowner from './components/Storeowner';
 import Stores from './components/Stores';
 import Admin from './components/Admin';
 import Store from './components/Store';
@@ -17,9 +17,9 @@ ReactDOM.render (
                 <Route exact path='/' component={App} />
                 <Route exact path='/managers' component={Manager} />
                 <Route exact path='/admins' component={Admin} />
-                <Route exact path='/storeowners' component={StoreOwner} />
+                <Route exact path='/storeowners' component={Storeowner} />
                 <Route exact path='/stores' component={Stores} />
-                <Route path='/stores/:storeName' component={Store} />
+                <Route path='/store/:storeAddress' component={Store} />
             </div>
         </BrowserRouter>, document.getElementById('root'));
 
