@@ -5,11 +5,16 @@ import "./Storefront.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
+/** @title Marketplace Contract */
 contract Marketplace {
+
+    /* using openzeppelin for uint operations */
     using SafeMath for uint256;
 
+    /* the marketplace manager address */
     address public manager;
 
+    /* mapping admins and storeowners to their ids */
     mapping(address => uint256) public adminToId;
     mapping(address => uint256) public storeownerToId;
 
@@ -26,7 +31,9 @@ contract Marketplace {
     address[] public admins;
     address[] public storeowners;
 
+
     /* modifiers */
+
     modifier onlyManager {
         require(msg.sender == manager, "This is a manager-only function!");
         _;
@@ -42,12 +49,18 @@ contract Marketplace {
         _;
     }
 
-
+    /** @dev initializes the manager address 
+      */
     constructor() public {
         manager = msg.sender;
     }
 
+
     /* manager functionalities */
+
+    /** @dev adds new admins 
+      * @param _newAdmin new admin's address
+      */
     function addAdmin(address _newAdmin) public onlyManager {
         require(adminToId[_newAdmin] == 0, "This admin is already registered!");
 
@@ -55,13 +68,21 @@ contract Marketplace {
         admins.push(_newAdmin);
     }
 
+    /** @dev removes admins 
+      * @param _currAdmin admin's address
+      */
     function removeAdmin(address _currAdmin) public onlyManager {
 
         delete admins[adminToId[_currAdmin].sub(1)];
         delete adminToId[_currAdmin];
     }
 
+
     /* admins functionalities */
+
+    /** @dev adds new storeowners
+      * @param _newStoreowner new storeowner's address
+      */
     function addStoreowner(address _newStoreowner) public onlyAdmin {
         require(storeownerToId[_newStoreowner] == 0, "This admin is already registered!");
 
@@ -69,13 +90,21 @@ contract Marketplace {
         storeowners.push(_newStoreowner);
     }
 
+    /** @dev removes storeowners
+      * @param _currStoreowner storeowner's address
+      */
     function removeStoreowner(address _currStoreowner) public onlyAdmin {
 
         delete storeowners[storeownerToId[_currStoreowner].sub(1)];
         delete storeownerToId[_currStoreowner];
     }
 
+
     /* storeowners functionalities */
+
+    /** @dev creates new storefronts
+      * @param _storeName new storefront name
+      */
     function createStorefront(bytes32 _storeName) public onlyStoreowner {
 
         Storefront newStorefront = new Storefront(_storeName, msg.sender);
@@ -89,6 +118,9 @@ contract Marketplace {
         emit storefrontCreated(newStorefront);
     }
 
+    /** @dev removs storefronts
+      * @param _storeAddress storefront contract address
+      */
     function removeStorefront(address _storeAddress) public onlyStoreowner {
 
         Storefront toBeDestructed = Storefront(_storeAddress);
@@ -100,7 +132,9 @@ contract Marketplace {
         delete storeAddressToStoreowner[_storeAddress];
     }
 
+
     /* helpers */
+
     function getDeployedStorefronts() public view returns (address[] memory) {
         return deployedStorefronts;
     }
