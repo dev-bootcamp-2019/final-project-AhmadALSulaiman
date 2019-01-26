@@ -72,7 +72,7 @@ class Product extends Component {
         return (
             <div className="col-4">
                 <div className="card" style={{'width':'15rem'}}>
-                    <img className="card-img-top" src="https://gusandruby.com/wp-content/uploads/2015/03/img-storefront-gallery-1.jpg" alt="Card image cap" />
+                    <img className="card-img-top" src="https://cdn.pixabay.com/photo/2016/05/21/19/57/frogs-1407321_960_720.jpg" alt="Card image cap" />
                     <div className="row">
                         <div className="col-12">
                                 <input
